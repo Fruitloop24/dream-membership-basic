@@ -16,18 +16,34 @@ Membership/paywall template powered by Dream API. Auth, billing, and content gat
 ## Quick Start
 
 ```bash
-npm install          # Gets @dream-api/sdk from npm
+npm install
+cp .env.example .env.local
+# Add your publishable key to .env.local
 npm run dev
 ```
 
-Set `VITE_DREAM_PUBLISHABLE_KEY` in `.env.local` with your key from dream-api dashboard.
+**That's it.** Your membership site now has:
+- User authentication (sign up, sign in, sign out)
+- Stripe billing (subscriptions, payment portal)
+- Content gating (free vs paid access)
+- Pricing page (pulls from your dashboard)
 
-## Setup Command
+Go check it out at **http://localhost:5173** - click around, try signing up. It all works. **Then come back here** - that was just the foundation.
 
-Run `/setup` for guided configuration:
-1. Get your publishable key
-2. Configure branding and content
-3. Done - auth, billing, gating all wired up
+## Let's Customize This Thing
+
+**Now I can customize almost anything for you:**
+- Brand name, colors, theme (dark/light)
+- Headlines, copy, and messaging for YOUR niche
+- Testimonials with your real member quotes
+- Feature lists and pricing descriptions
+- Hero images, logos, custom sections
+- Layouts, spacing, styling tweaks
+- Videos, embeds, custom components
+
+**Just tell me what you're building.** "I run a fitness membership" or "Make it feel more premium" - I'll rewrite the copy, pick the right icons, adjust the styling.
+
+Run `/setup` for a guided walkthrough, or just start asking me to change things. This is where it gets fun.
 
 ## File Structure
 

@@ -1,14 +1,56 @@
-# Dream SaaS Template
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Fruitloop24/dream-membership-basic/main/public/dream-logo.svg" alt="Dream API" width="120" />
+</p>
 
-Auth, billing, and usage tracking. One key setup.
+<h1 align="center">Dream Membership Template</h1>
+
+<p align="center">
+  <strong>Your content. Your community. Payments handled.</strong>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#the-ai-way">AI Setup</a> •
+  <a href="#why-dream-api">Why Dream API</a> •
+  <a href="#make-it-yours">Make It Yours</a>
+</p>
+
+---
+
+## Why Dream API?
+
+You've got content people will pay for. Courses, tutorials, exclusive access, community - whatever your thing is. You don't want to wire up Stripe subscriptions or build auth flows. You want to create.
+
+**Dream API handles the business stuff.** You handle the magic.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│   You create ────────►  YOUR CONTENT                    │
+│                         Courses · Videos · Downloads    │
+│                         Community · Coaching            │
+│                                                         │
+│   We handle ─────────►  Auth · Subscriptions            │
+│                         Content gating · Billing        │
+│                         Member management               │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**This template is the foundation. You build your empire on top.**
+
+---
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/Fruitloop24/dream-membership-basic.git my-membership
+cd my-membership
 npm install
+cp .env.example .env.local
 ```
 
-Create `.env.local`:
+Add your publishable key to `.env.local`:
 ```
 VITE_DREAM_PUBLISHABLE_KEY=pk_test_xxx
 ```
@@ -17,57 +59,159 @@ VITE_DREAM_PUBLISHABLE_KEY=pk_test_xxx
 npm run dev
 ```
 
-Open http://localhost:5173
+**Open http://localhost:5173** - Your membership site is live. Sign up works. Billing works. Content gating works.
 
-## AI Setup
+---
 
-Using Claude Code, Cursor, or Windsurf? Run:
+## The AI Way
+
+This is where it gets fun. Open the project in **Claude Code**, **Cursor**, or **Windsurf** and run:
 
 ```
 /setup
 ```
 
-The AI will walk you through configuration.
+The AI becomes your marketing team:
+- 🎯 **Positioning** - Tell it your niche, it writes headlines that convert
+- ✍️ **Copy** - Describe your value, it writes the sales pitch
+- 💬 **Testimonials** - It'll even draft social proof for you to customize
+- 🎨 **Vibe** - Premium? Friendly? Exclusive? Just tell it
 
-## What's Included
+**"I teach indie hackers how to validate ideas fast"** → Done. Branded. Ready to sell.
 
-- Sign up / Sign in / Sign out
-- User profile & account settings
-- Subscription billing (Stripe)
-- Usage tracking with plan limits
-- Pricing page (pulls from dashboard)
-- Landing page with config-based branding
-- Light/dark theme toggle
+---
 
-## What You Need
+## Make It Yours
 
-1. Dream API account
-2. Project created in dashboard
-3. Tiers configured (prices, limits)
-4. Publishable key
+### The Config File
 
-That's it. No Clerk account. No Stripe setup. Just your key.
+Everything lives in `src/config.ts`:
 
-## Customize
+```typescript
+export const config = {
+  appName: 'Validate Fast',
+  tagline: 'Stop building. Start testing.',
+  theme: 'light',
+  accentColor: 'violet',  // emerald, sky, violet, rose, amber, zinc
 
-Edit `src/config.ts` for all branding:
-- App name, tagline
-- Theme (light/dark)
-- Accent color
-- Hero content
-- Features
-- FAQ
+  hero: {
+    headline: 'Your next idea validated in 48 hours',
+    subheadline: 'Frameworks, templates, and live feedback from founders who\'ve done it',
+  },
 
-## Docs
+  testimonials: {
+    enabled: true,
+    items: [
+      { quote: 'Saved me 3 months of building the wrong thing', name: 'Sarah K.' },
+      // ...
+    ],
+  },
+}
+```
 
-See [CLAUDE.md](./CLAUDE.md) for full documentation.
+### Content Gating
 
-## Deploy
+The magic is dead simple:
+
+```tsx
+const hasPaidAccess = plan !== 'free';
+
+{hasPaidAccess ? (
+  <YourPremiumContent />
+) : (
+  <LockedPreview />
+)}
+```
+
+Free users see the tease. Paid members see everything.
+
+---
+
+## Make It Installable
+
+Want members to install your site like an app? Run:
+
+```
+/pwa
+```
+
+This is huge for memberships:
+- 📱 **One tap access** - Members open your content instantly
+- 🔔 **Coming soon: Push notifications** - Notify members of new content
+- 📲 **QR codes** - Add to your social bio, email signature, business cards
+
+Your membership in their pocket. Always accessible.
+
+---
+
+## What's in Your Dashboard
+
+Your [Dream API dashboard](https://dreamapi.dev) controls the business:
+
+| You Set | Site Updates |
+|---------|--------------|
+| Tier prices ($9/mo, $29/mo) | Pricing page updates |
+| Tier names (Free, Pro, VIP) | Plan badges update |
+| Features per tier | Gating updates automatically |
+
+**Change prices → Site updates. No deploy needed.**
+
+---
+
+## The Stack
+
+```
+React + Vite          Fast dev, fast builds
+Tailwind CSS          Style anything
+Dream API SDK         Auth, billing, gating - done
+Clerk (under hood)    Battle-tested auth
+Stripe (under hood)   Battle-tested subscriptions
+```
+
+You don't configure Clerk. You don't touch Stripe. You just create.
+
+---
+
+## Deploy in 60 Seconds
 
 ```bash
 npm run build
 ```
 
-Deploy `dist/` to Cloudflare Pages, Vercel, or Netlify.
+**Cloudflare Pages** (recommended):
+```bash
+npx wrangler pages deploy dist
+```
 
-Set `VITE_DREAM_PUBLISHABLE_KEY` as environment variable.
+**Vercel/Netlify**: Connect repo, add `VITE_DREAM_PUBLISHABLE_KEY` env var. Done.
+
+---
+
+## Self-Host the Backend
+
+Want to run your own Dream API instance?
+
+Check out **[plug-saas](https://github.com/Fruitloop24/plug-saas)** - the open source backend. Deploy your own auth + billing infrastructure on Cloudflare Workers.
+
+---
+
+## We Want to Hear From You
+
+This is how we think memberships should work:
+- **AI writes your copy** - You describe, it sells
+- **Config over code** - Change a string, not a component
+- **Subscriptions just work** - Stripe under the hood, you never touch it
+
+**What's missing? What would make you switch from Gumroad/Patreon/Memberful?**
+
+Open an issue. Tweet at us. We're building this for creators.
+
+---
+
+<p align="center">
+  <strong>MIT License</strong> - Do whatever you want. Build something cool.
+</p>
+
+<p align="center">
+  <sub>Built with ☕ by developers who believe creators should create, not code payment forms.</sub>
+</p>
