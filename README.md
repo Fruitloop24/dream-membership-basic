@@ -10,10 +10,29 @@
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
-  <a href="#the-ai-way">AI Setup</a> •
   <a href="#why-dream-api">Why Dream API</a> •
-  <a href="#make-it-yours">Make It Yours</a>
+  <a href="#manual-setup">Manual Setup</a> •
+  <a href="#deploy">Deploy</a>
 </p>
+
+---
+
+## Quick Start
+
+Open this project in **Claude Code**, **Cursor**, or **Windsurf** and run:
+
+```
+/setup
+```
+
+That's it. The AI walks you through everything:
+- 🔑 **API Key** - Paste your publishable key, done
+- 🎯 **Positioning** - Tell it your niche, it writes headlines that convert
+- ✍️ **Copy** - Describe your value, it writes the sales pitch
+- 💬 **Testimonials** - It'll even draft social proof for you to customize
+- 🎨 **Vibe** - Premium? Friendly? Exclusive? Just tell it
+
+**"I teach indie hackers how to validate ideas fast"** → Done. Branded. Ready to sell.
 
 ---
 
@@ -41,92 +60,6 @@ You've got content people will pay for. Courses, tutorials, exclusive access, co
 
 ---
 
-## Quick Start
-
-```bash
-git clone https://github.com/Fruitloop24/dream-membership-basic.git my-membership
-cd my-membership
-npm install
-cp .env.example .env.local
-```
-
-Add your publishable key to `.env.local`:
-```
-VITE_DREAM_PUBLISHABLE_KEY=pk_test_xxx
-```
-
-```bash
-npm run dev
-```
-
-**Open http://localhost:5173** - Your membership site is live. Sign up works. Billing works. Content gating works.
-
----
-
-## The AI Way
-
-This is where it gets fun. Open the project in **Claude Code**, **Cursor**, or **Windsurf** and run:
-
-```
-/setup
-```
-
-The AI becomes your marketing team:
-- 🎯 **Positioning** - Tell it your niche, it writes headlines that convert
-- ✍️ **Copy** - Describe your value, it writes the sales pitch
-- 💬 **Testimonials** - It'll even draft social proof for you to customize
-- 🎨 **Vibe** - Premium? Friendly? Exclusive? Just tell it
-
-**"I teach indie hackers how to validate ideas fast"** → Done. Branded. Ready to sell.
-
----
-
-## Make It Yours
-
-### The Config File
-
-Everything lives in `src/config.ts`:
-
-```typescript
-export const config = {
-  appName: 'Validate Fast',
-  tagline: 'Stop building. Start testing.',
-  theme: 'light',
-  accentColor: 'violet',  // emerald, sky, violet, rose, amber, zinc
-
-  hero: {
-    headline: 'Your next idea validated in 48 hours',
-    subheadline: 'Frameworks, templates, and live feedback from founders who\'ve done it',
-  },
-
-  testimonials: {
-    enabled: true,
-    items: [
-      { quote: 'Saved me 3 months of building the wrong thing', name: 'Sarah K.' },
-      // ...
-    ],
-  },
-}
-```
-
-### Content Gating
-
-The magic is dead simple:
-
-```tsx
-const hasPaidAccess = plan !== 'free';
-
-{hasPaidAccess ? (
-  <YourPremiumContent />
-) : (
-  <LockedPreview />
-)}
-```
-
-Free users see the tease. Paid members see everything.
-
----
-
 ## Make It Installable
 
 Want members to install your site like an app? Run:
@@ -144,17 +77,77 @@ Your membership in their pocket. Always accessible.
 
 ---
 
-## What's in Your Dashboard
+## Your Dashboard
 
-Your [Dream API dashboard](https://dreamapi.dev) controls the business:
+Your Dream API dashboard controls the business:
 
-| You Set | Site Updates |
-|---------|--------------|
-| Tier prices ($9/mo, $29/mo) | Pricing page updates |
-| Tier names (Free, Pro, VIP) | Plan badges update |
-| Features per tier | Gating updates automatically |
+- **Tier prices** ($9/mo, $29/mo) → Pricing page updates automatically
+- **Tier names** (Free, Pro, VIP) → Plan badges update
+- **Features per tier** → Gating updates automatically
 
 **Change prices → Site updates. No deploy needed.**
+
+---
+
+## Content Gating
+
+The magic is dead simple:
+
+```tsx
+const hasPaidAccess = plan !== 'free';
+
+{hasPaidAccess ? (
+  <YourPremiumContent />
+) : (
+  <LockedPreview />
+)}
+```
+
+Free users see the tease. Paid members see everything.
+
+---
+
+## Manual Setup
+
+Prefer doing it yourself? No problem.
+
+```bash
+git clone https://github.com/Fruitloop24/dream-membership-basic.git my-membership
+cd my-membership
+npm install
+cp .env.example .env.local
+```
+
+Add your publishable key to `.env.local`:
+```
+VITE_DREAM_PUBLISHABLE_KEY=pk_test_xxx
+```
+
+```bash
+npm run dev
+```
+
+Open http://localhost:5173 - your membership site is running.
+
+### The Config File
+
+Everything lives in `src/config.ts`:
+
+```typescript
+export const config = {
+  appName: 'Validate Fast',
+  tagline: 'Stop building. Start testing.',
+  theme: 'light',
+  accentColor: 'violet',  // emerald, sky, violet, rose, amber, zinc
+
+  testimonials: {
+    enabled: true,
+    items: [
+      { quote: 'Saved me 3 months of building the wrong thing', name: 'Sarah K.' },
+    ],
+  },
+}
+```
 
 ---
 
@@ -172,7 +165,7 @@ You don't configure Clerk. You don't touch Stripe. You just create.
 
 ---
 
-## Deploy in 60 Seconds
+## Deploy
 
 ```bash
 npm run build
