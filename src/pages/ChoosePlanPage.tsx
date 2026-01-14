@@ -2,6 +2,15 @@
  * CHOOSE PLAN - Pricing selection (protected)
  *
  * Uses shared config from src/config.ts
+ *
+ * AUTO-CHECKOUT FLOW:
+ * New signups land here with plan='free'. This page automatically:
+ * 1. Waits for SDK + Clerk ticket to be consumed
+ * 2. Finds the paid tier
+ * 3. Creates Stripe checkout
+ * 4. Redirects to Stripe
+ *
+ * User sees a spinner during this process - no manual clicks needed.
  */
 
 import { useEffect, useState } from 'react';
@@ -12,18 +21,20 @@ import Nav from '../components/Nav';
 import type { Tier } from '@dream-api/sdk';
 
 export default function ChoosePlanPage() {
-  const { api, isReady, user } = useDreamAPI();
+  const { api, isReady, isSignedIn, user } = useDreamAPI();
   const navigate = useNavigate();
 
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [checkoutStarted, setCheckoutStarted] = useState(false);
 
   const currentPlan = user?.plan || 'free';
   const accent = getAccentClasses();
   const theme = getThemeClasses();
 
+  // Load tiers
   useEffect(() => {
     async function loadTiers() {
       try {
@@ -38,6 +49,72 @@ export default function ChoosePlanPage() {
     }
     loadTiers();
   }, []);
+
+  // Auto-checkout for new signups (plan='free')
+  useEffect(() => {
+    async function autoCheckout() {
+      // Wait for SDK
+      if (!isReady) return;
+
+      // If not signed in...
+      if (!isSignedIn) {
+        // BUT if we have a clerk ticket, WAIT - don't redirect yet!
+        // The SDK is still consuming the ticket
+        const hasTicket = window.location.search.includes('__clerk_ticket');
+        if (hasTicket) {
+          console.log('[ChoosePlan] Waiting for ticket to be consumed...');
+          return; // Keep spinning, don't redirect
+        }
+        // No ticket and not signed in = go to landing
+        navigate('/', { replace: true });
+        return;
+      }
+
+      // If already paid, go to dashboard
+      if (currentPlan !== 'free') {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      // Wait for tiers to load
+      if (loading || tiers.length === 0) return;
+
+      // Prevent double checkout
+      if (checkoutStarted) return;
+
+      // Find paid tier
+      const paidTier = tiers.find(t => t.price > 0);
+      if (!paidTier) return;
+
+      // Auto-create checkout
+      setCheckoutStarted(true);
+      setUpgrading(paidTier.name);
+
+      try {
+        const result = await api.billing.createCheckout({
+          tier: paidTier.name,
+          priceId: paidTier.priceId,
+          successUrl: window.location.origin + '/dashboard?success=true',
+          cancelUrl: window.location.origin + '/',
+        });
+
+        if (result.url) {
+          window.location.href = result.url;
+        } else {
+          setError('Failed to create checkout');
+          setCheckoutStarted(false);
+          setUpgrading(null);
+        }
+      } catch (err: any) {
+        console.error('Auto-checkout error:', err);
+        setError(err.message || 'Checkout failed');
+        setCheckoutStarted(false);
+        setUpgrading(null);
+      }
+    }
+
+    autoCheckout();
+  }, [isReady, isSignedIn, currentPlan, loading, tiers, checkoutStarted, api, navigate]);
 
   const handleSelectPlan = async (tier: Tier) => {
     if (tier.name === 'free' || tier.price === 0) {
@@ -72,10 +149,14 @@ export default function ChoosePlanPage() {
     }
   };
 
-  if (loading) {
+  // Show spinner while loading or during auto-checkout
+  if (loading || !isReady || checkoutStarted) {
     return (
-      <div className={`min-h-screen ${theme.pageBg} flex items-center justify-center`}>
-        <div className={`w-6 h-6 border-2 ${theme.progressBg} border-t-current rounded-full animate-spin ${theme.body}`}></div>
+      <div className={`min-h-screen ${theme.pageBg} flex flex-col items-center justify-center gap-4`}>
+        <div className={`w-8 h-8 border-2 ${theme.progressBg} border-t-current rounded-full animate-spin ${theme.body}`}></div>
+        <p className={`${theme.body} text-sm`}>
+          {checkoutStarted ? 'Preparing your checkout...' : 'Loading...'}
+        </p>
       </div>
     );
   }

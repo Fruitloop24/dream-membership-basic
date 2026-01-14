@@ -8,7 +8,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useDreamAPI } from '../hooks/useDreamAPI';
+import { useDreamAPI, dreamAPI } from '../hooks/useDreamAPI';
 import { CONFIG, getAccentClasses, getThemeClasses } from '../config';
 import Nav from '../components/Nav';
 import Icon from '../components/Icons';
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [message, setMessage] = useState('');
   const [searchParams] = useSearchParams();
   const successHandled = useRef(false);
+  const checkoutStarted = useRef(false);
 
   const accent = getAccentClasses();
   const theme = getThemeClasses();
@@ -36,6 +37,47 @@ export default function Dashboard() {
       setTimeout(() => setMessage(''), 5000);
     }
   }, [searchParams, refreshUser]);
+
+  // AUTO-CHECKOUT: Free users go straight to Stripe (with trial if configured)
+  useEffect(() => {
+    async function handleAutoCheckout() {
+      if (!isReady || !user) return;
+      if (plan !== 'free') return; // Already paid
+      if (searchParams.get('success')) return; // Just paid, waiting for webhook
+      if (searchParams.get('canceled')) return; // User canceled, show content
+      if (checkoutStarted.current) return;
+
+      checkoutStarted.current = true;
+
+      try {
+        // Fetch tiers to get the paid tier info
+        const res = await dreamAPI.products.listTiers();
+        const paidTier = res.tiers?.find(t => t.price > 0);
+
+        if (!paidTier) {
+          console.error('No paid tier found');
+          return;
+        }
+
+        // Create checkout (trial days come from tier config in dashboard)
+        const result = await api.billing.createCheckout({
+          tier: paidTier.name,
+          priceId: paidTier.priceId,
+          successUrl: window.location.origin + '/dashboard?success=true',
+          cancelUrl: window.location.origin + '/dashboard?canceled=true',
+        });
+
+        if (result.url) {
+          window.location.href = result.url;
+        }
+      } catch (err) {
+        console.error('Auto-checkout error:', err);
+        checkoutStarted.current = false; // Allow retry
+      }
+    }
+
+    handleAutoCheckout();
+  }, [isReady, user, plan, api, searchParams]);
 
   return (
     <div className={`min-h-screen ${theme.pageBg}`}>
