@@ -25,6 +25,18 @@ Your membership site now has:
 
 **That's it.** The checkout flow is handled for you.
 
+## Testing with Clerk Test Mode
+
+Skip email verification during development:
+
+| Type | Value |
+|------|-------|
+| Test Email | Any email with `+clerk_test` (e.g., `you+clerk_test@gmail.com`) |
+| Verification Code | `424242` |
+| Test Phone | `+15555550100` to `+15555550199` |
+
+**Example:** Sign up with `dev+clerk_test@example.com`, enter any password, use code `424242`. No real email sent.
+
 ## Customization
 
 Run `/setup` for a guided walkthrough, or edit `src/config.ts` directly:

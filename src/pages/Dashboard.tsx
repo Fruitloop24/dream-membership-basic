@@ -14,7 +14,7 @@ import Nav from '../components/Nav';
 import Icon from '../components/Icons';
 
 export default function Dashboard() {
-  const { api, isReady, user, refreshUser } = useDreamAPI();
+  const { api, isReady, user } = useDreamAPI();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [searchParams] = useSearchParams();
@@ -26,17 +26,19 @@ export default function Dashboard() {
   const plan = user?.plan || 'free';
   const hasPaidAccess = plan !== 'free';
 
-  // Handle success redirect from Stripe
+  // Handle success redirect from Stripe - reload to get fresh data
   useEffect(() => {
     const success = searchParams.get('success');
     if (success === 'true' && !successHandled.current) {
       successHandled.current = true;
       setMessage('Welcome! You now have full access.');
-      window.history.replaceState({}, '', '/dashboard');
-      setTimeout(() => refreshUser(), 1500);
-      setTimeout(() => setMessage(''), 5000);
+
+      // Wait for webhook to process, then reload to get fresh data
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 2000);
     }
-  }, [searchParams, refreshUser]);
+  }, [searchParams]);
 
   // AUTO-CHECKOUT: Free users go straight to Stripe (with trial if configured)
   useEffect(() => {
