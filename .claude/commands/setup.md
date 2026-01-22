@@ -24,7 +24,7 @@ Before you start, explain what's included:
 
 All you need is your publishable key. One key, full membership site.
 
-**And here's the best part:** Just describe your membership in plain English and I'll write all the copy, pick the right icons, and make it feel like yours. Want gradients? Different layout? Just ask."
+**After setup, you can customize anything through natural language.** Just tell me what you want - 'make it darker', 'write copy for my yoga membership', 'add a gradient hero' - and I'll make it happen."
 
 ---
 
