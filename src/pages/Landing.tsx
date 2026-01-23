@@ -23,7 +23,11 @@ export default function Landing() {
 
   useEffect(() => {
     dreamAPI.products.listTiers()
-      .then(res => setTiers(res.tiers || []))
+      .then(res => {
+        // Sort tiers by price ascending (least to greatest)
+        const sorted = (res.tiers || []).sort((a, b) => a.price - b.price);
+        setTiers(sorted);
+      })
       .catch(console.error)
       .finally(() => setLoadingTiers(false));
   }, []);
