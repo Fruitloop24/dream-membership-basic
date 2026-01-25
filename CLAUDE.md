@@ -63,10 +63,12 @@ const hasPaidAccess = plan !== 'free';
 
 Replace the demo content cards with your actual content - videos, downloads, courses, etc.
 
-## Commands
+## AI Commands
 
-- `/setup` - AI-guided branding wizard
-- `/pwa` - Add installable app support
+Commands for AI editors (Claude Code, Cursor, Windsurf) are in `.claude/commands/`:
+
+- **`.claude/commands/setup.md`** - Interactive setup wizard for branding, API key, theme
+- **`.claude/commands/pwa.md`** - Add Progressive Web App support (installable, works offline)
 
 ## SDK Reference
 
