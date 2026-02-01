@@ -62,10 +62,13 @@ export default function Dashboard() {
         }
 
         // Create checkout (trial days come from tier config in dashboard)
+        // Use refresh URL for success so JWT is updated with new plan
+        const refreshUrl = api.auth.getRefreshUrl({ redirect: '/dashboard' });
+
         const result = await api.billing.createCheckout({
           tier: paidTier.name,
           priceId: paidTier.priceId,
-          successUrl: window.location.origin + '/dashboard?success=true',
+          successUrl: refreshUrl,
           cancelUrl: window.location.origin + '/dashboard?canceled=true',
         });
 
