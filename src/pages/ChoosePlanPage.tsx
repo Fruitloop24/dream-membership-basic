@@ -1,16 +1,7 @@
 /**
  * CHOOSE PLAN - Pricing selection (protected)
  *
- * Uses shared config from src/config.ts
- *
- * AUTO-CHECKOUT FLOW:
- * New signups land here with plan='free'. This page automatically:
- * 1. Waits for SDK + Clerk ticket to be consumed
- * 2. Finds the paid tier
- * 3. Creates Stripe checkout
- * 4. Redirects to Stripe
- *
- * User sees a spinner during this process - no manual clicks needed.
+ * Simple tier selection - no auto-checkout
  */
 
 import { useEffect, useState } from 'react';
@@ -21,27 +12,23 @@ import Nav from '../components/Nav';
 import type { Tier } from '@dream-api/sdk';
 
 export default function ChoosePlanPage() {
-  const { api, isReady, isSignedIn, user } = useDreamAPI();
+  const { api, isReady, user } = useDreamAPI();
   const navigate = useNavigate();
 
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState<string | null>(null);
-  const [checkoutStarted, setCheckoutStarted] = useState(false);
 
   const currentPlan = user?.plan || 'free';
   const accent = getAccentClasses();
   const theme = getThemeClasses();
 
-  // Load tiers
   useEffect(() => {
     async function loadTiers() {
       try {
         const response = await dreamAPI.products.listTiers();
-        // Sort tiers by price ascending (least to greatest)
-        const sortedTiers = (response.tiers || []).sort((a, b) => a.price - b.price);
-        setTiers(sortedTiers);
+        setTiers(response.tiers || []);
       } catch (err: any) {
         console.error('Failed to load tiers:', err);
         setError(err.message || 'Failed to load pricing');
@@ -51,75 +38,6 @@ export default function ChoosePlanPage() {
     }
     loadTiers();
   }, []);
-
-  // Auto-checkout for new signups (plan='free')
-  useEffect(() => {
-    async function autoCheckout() {
-      // Wait for SDK
-      if (!isReady) return;
-
-      // If not signed in...
-      if (!isSignedIn) {
-        // BUT if we have a clerk ticket, WAIT - don't redirect yet!
-        // The SDK is still consuming the ticket
-        const hasTicket = window.location.search.includes('__clerk_ticket');
-        if (hasTicket) {
-          console.log('[ChoosePlan] Waiting for ticket to be consumed...');
-          return; // Keep spinning, don't redirect
-        }
-        // No ticket and not signed in = go to landing
-        navigate('/', { replace: true });
-        return;
-      }
-
-      // If already paid, go to dashboard
-      if (currentPlan !== 'free') {
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-
-      // Wait for tiers to load
-      if (loading || tiers.length === 0) return;
-
-      // Prevent double checkout
-      if (checkoutStarted) return;
-
-      // Find paid tier
-      const paidTier = tiers.find(t => t.price > 0);
-      if (!paidTier) return;
-
-      // Auto-create checkout
-      setCheckoutStarted(true);
-      setUpgrading(paidTier.name);
-
-      try {
-        // Use refresh URL for success so JWT is updated with new plan
-        const refreshUrl = api.auth.getRefreshUrl({ redirect: '/dashboard' });
-
-        const result = await api.billing.createCheckout({
-          tier: paidTier.name,
-          priceId: paidTier.priceId,
-          successUrl: refreshUrl,
-          cancelUrl: window.location.origin + '/',
-        });
-
-        if (result.url) {
-          window.location.href = result.url;
-        } else {
-          setError('Failed to create checkout');
-          setCheckoutStarted(false);
-          setUpgrading(null);
-        }
-      } catch (err: any) {
-        console.error('Auto-checkout error:', err);
-        setError(err.message || 'Checkout failed');
-        setCheckoutStarted(false);
-        setUpgrading(null);
-      }
-    }
-
-    autoCheckout();
-  }, [isReady, isSignedIn, currentPlan, loading, tiers, checkoutStarted, api, navigate]);
 
   const handleSelectPlan = async (tier: Tier) => {
     if (tier.name === 'free' || tier.price === 0) {
@@ -134,13 +52,10 @@ export default function ChoosePlanPage() {
 
     setUpgrading(tier.name);
     try {
-      // Use refresh URL for success so JWT is updated with new plan
-      const refreshUrl = api.auth.getRefreshUrl({ redirect: '/dashboard' });
-
       const result = await api.billing.createCheckout({
         tier: tier.name,
         priceId: tier.priceId,
-        successUrl: refreshUrl,
+        successUrl: window.location.origin + '/dashboard?success=true',
         cancelUrl: window.location.origin + '/choose-plan?canceled=true',
       });
 
@@ -157,21 +72,16 @@ export default function ChoosePlanPage() {
     }
   };
 
-  // Show spinner while loading or during auto-checkout
-  if (loading || !isReady || checkoutStarted) {
+  if (loading) {
     return (
-      <div className={`min-h-screen ${theme.pageBg} flex flex-col items-center justify-center gap-4`}>
-        <div className={`w-8 h-8 border-2 ${theme.progressBg} border-t-current rounded-full animate-spin ${theme.body}`}></div>
-        <p className={`${theme.body} text-sm`}>
-          {checkoutStarted ? 'Preparing your checkout...' : 'Loading...'}
-        </p>
+      <div className={`min-h-screen ${theme.pageBg} flex items-center justify-center`}>
+        <div className={`w-6 h-6 border-2 ${theme.progressBg} border-t-current rounded-full animate-spin ${theme.body}`}></div>
       </div>
     );
   }
 
   return (
     <div className={`min-h-screen ${theme.pageBg}`}>
-      {/* Shared Nav with profile dropdown */}
       <Nav />
 
       <div className="max-w-5xl mx-auto px-6 py-16">
@@ -194,11 +104,12 @@ export default function ChoosePlanPage() {
         )}
 
         {/* Pricing Cards */}
-        <div className={`grid gap-6 ${tiers.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : tiers.length >= 3 ? 'md:grid-cols-3' : ''}`}>
-          {tiers.map((tier, index) => {
+        <div className={`grid gap-6 ${tiers.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : tiers.length >= 3 ? 'md:grid-cols-3' : 'max-w-md mx-auto'}`}>
+          {[...tiers].sort((a, b) => a.price - b.price).map((tier, index, sortedTiers) => {
             const isCurrentPlan = tier.name === currentPlan;
             const isUpgrading = upgrading === tier.name;
-            const isPopular = tier.popular || index === Math.floor(tiers.length / 2);
+            const isPopular = tier.popular || (sortedTiers.length > 1 && index === Math.floor(sortedTiers.length / 2));
+            const priceInDollars = tier.price / 100;
 
             return (
               <div
@@ -207,12 +118,12 @@ export default function ChoosePlanPage() {
                   isCurrentPlan
                     ? `border-2 ${accent.border}`
                     : isPopular
-                    ? `border-2 ${accent.border} opacity-80`
+                    ? `border-2 ${accent.border}`
                     : theme.cardHover
                 }`}
               >
                 {/* Popular badge */}
-                {isPopular && !isCurrentPlan && (
+                {isPopular && !isCurrentPlan && sortedTiers.length > 1 && (
                   <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-medium rounded ${accent.bg} text-white`}>
                     POPULAR
                   </div>
@@ -230,12 +141,12 @@ export default function ChoosePlanPage() {
                 </h3>
 
                 <div className="mb-4">
-                  <span className={`text-3xl font-light ${theme.heading}`}>${(tier.price / 100).toFixed(tier.price % 100 === 0 ? 0 : 2)}</span>
+                  <span className={`text-3xl font-light ${theme.heading}`}>${priceInDollars.toFixed(priceInDollars % 1 === 0 ? 0 : 2)}</span>
                   <span className={`${theme.body} text-sm`}>/month</span>
                 </div>
 
                 <p className={`${theme.body} text-sm mb-6`}>
-                  {tier.price === 0 ? 'Limited preview access' : 'Full access to all content'}
+                  {priceInDollars === 0 ? 'Limited preview access' : 'Full access to all content'}
                 </p>
 
                 <button
@@ -246,7 +157,7 @@ export default function ChoosePlanPage() {
                       ? `${theme.buttonDisabled} cursor-default`
                       : isUpgrading
                       ? `${theme.buttonDisabled} cursor-wait`
-                      : tier.price === 0
+                      : priceInDollars === 0
                       ? theme.buttonSecondary
                       : `${accent.bg} text-white ${accent.bgHover}`
                   }`}
@@ -255,14 +166,14 @@ export default function ChoosePlanPage() {
                     ? 'Current Plan'
                     : isUpgrading
                     ? 'Processing...'
-                    : tier.price === 0
+                    : priceInDollars === 0
                     ? 'Select Free'
                     : 'Upgrade'}
                 </button>
 
                 {tier.features && tier.features.length > 0 && (
                   <ul className="mt-6 space-y-2">
-                    {tier.features.map((feature, i) => (
+                    {tier.features.map((feature: string, i: number) => (
                       <li key={i} className={`flex items-start gap-2 ${theme.body} text-sm`}>
                         <svg className={`w-4 h-4 mt-0.5 ${accent.text} flex-shrink-0`} fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
