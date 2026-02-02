@@ -33,7 +33,7 @@ export default function Landing() {
   }, []);
 
   const getSignUpUrl = () => dreamAPI.auth.getSignUpUrl({
-    redirect: window.location.origin + '/dashboard'
+    redirect: window.location.origin + '/choose-plan'
   });
 
   return (
