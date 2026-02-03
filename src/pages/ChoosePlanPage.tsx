@@ -52,10 +52,13 @@ export default function ChoosePlanPage() {
 
     setUpgrading(tier.name);
     try {
+      // Use /refresh route to get fresh JWT after webhook updates plan
+      const refreshUrl = api.auth.getRefreshUrl({ redirect: '/dashboard' });
+
       const result = await api.billing.createCheckout({
         tier: tier.name,
         priceId: tier.priceId,
-        successUrl: window.location.origin + '/dashboard?success=true',
+        successUrl: refreshUrl,
         cancelUrl: window.location.origin + '/choose-plan?canceled=true',
       });
 
