@@ -83,11 +83,33 @@ user?.plan  // 'free', 'pro', etc.
 dreamAPI.auth.getSignUpUrl({ redirect: '/choose-plan' })
 dreamAPI.auth.getSignInUrl({ redirect: '/dashboard' })
 dreamAPI.auth.getCustomerPortalUrl()  // Account settings
+api.auth.getRefreshUrl({ redirect: '/dashboard' })  // Fresh JWT after upgrade
 
 // Billing
 api.billing.createCheckout({ tier, priceId, successUrl, cancelUrl })
 api.billing.openPortal({ returnUrl })  // Stripe billing portal
 ```
+
+## CRITICAL: Refresh URL After Checkout
+
+**Always use `getRefreshUrl()` as Stripe's successUrl, NOT a direct dashboard link.**
+
+```typescript
+// CORRECT - JWT refreshed with new plan
+const refreshUrl = api.auth.getRefreshUrl({ redirect: '/dashboard' });
+await api.billing.createCheckout({
+  tier: 'pro',
+  successUrl: refreshUrl,
+});
+
+// WRONG - User sees old plan until manual refresh
+await api.billing.createCheckout({
+  tier: 'pro',
+  successUrl: '/dashboard',
+});
+```
+
+**Why:** Stripe redirects BEFORE the webhook updates the plan. `/refresh` polls until the plan updates, then redirects with a fresh JWT.
 
 ## File Structure
 
